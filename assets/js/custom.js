@@ -147,6 +147,26 @@ function showAlert(title, message) {
     myModal.show();
 }
 
+function showConfirm(title, message, yesCallback) {
+    let m = $('#confirmModal');
+    m.find('.x-title').text(title);
+    m.find('.x-message').text(message);
+    let yesBtn = m.find('.x-yes');
+    let clickYes = function () {
+        console.log('Confirmed.');
+        yesCallback && yesCallback();
+    };
+    yesBtn.click(clickYes);
+    let myModal = new bootstrap.Modal(m.get(0), { backdrop: 'static', keyboard: false });
+    myModal.show();
+    let removeBindYes = function () {
+        console.log('remove yes.click().');
+        yesBtn.off('click', yesBtn);
+        m.get(0).removeEventListener('hide.bs.modal', removeBindYes);
+    };
+    m.get(0).addEventListener('hide.bs.modal', removeBindYes);
+}
+
 function showInfo(title, message) {
     let m = $('#infoModal');
     m.find('.x-title').text(title);
@@ -307,7 +327,7 @@ function initWallet() {
                     $('[show-address=' + this.account + ']').show();
                     $('[hide-address=' + this.account + ']').hide();
                     $('.x-current-address').text(abbrAddress(this.account));
-                    window.vm && window.vm.setCurrentAccount && window.vm.setCurrentAccount(this.account).then(r => console.log('done')).catch(err => console.error(err));
+                    window.vm && window.vm.setCurrentAccount && window.vm.setCurrentAccount(this.account).then(r => console.log('setCurrentAccount(' + this.account + ') done')).catch(err => console.error(err));
                 }
             },
             disconnected: async function () {
@@ -321,11 +341,15 @@ function initWallet() {
                 try {
                     await window.vm.setCurrentAccount(null);
                 } catch (e) { }
+                try {
+                    await window.vm.setCurrentChain(0);
+                } catch (e) { }
             },
             chainChanged: function (chainId) {
                 console.log('wallet chainId changed: ' + chainId + ' = ' + parseInt(chainId, 16));
                 this.chainId = parseInt(chainId, 16);
                 this.chainName = getChainName(this.chainId);
+                window.vm && window.vm.setCurrentChain && window.vm.setCurrentChain(this.chainId).then(r => console.log('setCurrentChain(' + this.chainId + ') done')).catch(err => console.error(err));
             },
             connectWallet: async function () {
                 console.log('try connect wallet...');
